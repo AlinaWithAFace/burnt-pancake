@@ -4,31 +4,81 @@ import heapdict
 
 class PancakeState:
     def __init__(self, stack, cost):
+        self.parent = None  # type: PancakeState
         self.stack = stack
         self.cost = cost
-        self.flip_1_state = None
-        self.flip_2_state = None
-        self.flip_3_state = None
-        self.flip_4_state = None
+        self.heuristic_cost = None
+        self.flip_1_state = None  # type: PancakeState
+        self.flip_2_state = None  # type: PancakeState
+        self.flip_3_state = None  # type: PancakeState
+        self.flip_4_state = None  # type: PancakeState
 
     def __repr__(self):
-        return "Pancake: {} | Cost: {}".format(self.stack, self.cost)
-
-    def __str__(self):
-        string = "Pancake: {} | Cost: {}\n    {}\n    {}\n    {}\n    {}".format(self.stack, self.cost,
-                                                                                 self.flip_1_state,
-                                                                                 self.flip_2_state,
-                                                                                 self.flip_3_state,
-                                                                                 self.flip_4_state)
-
+        # "Pancake: {}".format(self.stack)
+        string = ''.join(self.stack)
         return string
 
+    def __str__(self):
+        # "Pancake: {}".format(self.stack)
+        string = ''.join(self.stack)
+        return string
+        # string = "\nPancake: {}\n" \
+        #          "  Cost: {}\n" \
+        #          "  Children:\n" \
+        #          "      {}\n" \
+        #          "      {}\n" \
+        #          "      {}\n" \
+        #          "      {}\n".format(self.stack,
+        #                              self.cost,
+        #                              # self.parent,
+        #                              self.flip_1_state,
+        #                              self.flip_2_state,
+        #                              self.flip_3_state,
+        #                              self.flip_4_state)
+        # "  Parent: {}\n" \
+        # string = "Pancake: {}".format(self.stack)
+        # string = "Pancake: {} | Cost: {}\n    {}\n    {}\n    {}\n    {}".format(self.stack, self.cost,
+        #                                                                          self.flip_1_state,
+        #                                                                          self.flip_2_state,
+        #                                                                          self.flip_3_state,
+        #                                                                          self.flip_4_state)
+
+        # return string
+
+    def print_winning_state_tree(self):
+        string = ''.join(self.stack)
+        temp = "{} cost: {}".format(string, self.cost)
+        print(temp)
+        if self.parent is not None:
+            self.parent.print_winning_state_tree()
+
+            # for state in winning_states:  # type: PancakeState
+        #     print("\nwinning state step {}".format(state))
+        #     if state.parent is not None:
+        #         winning_states.append(state.parent)
+        #
+        # string = "\nPancake: {}\n" \
+        #          "  Cost: {}\n" \
+        #          "  Parent: {}\n" \
+        #          "  Children:\n" \
+        #          "      {}\n" \
+        #          "      {}\n" \
+        #          "      {}\n" \
+        #          "      {}\n".format(self.stack,
+        #                              self.cost,
+        #                              self.parent,
+        #                              self.flip_1_state,
+        #                              self.flip_2_state,
+        #                              self.flip_3_state,
+        #                              self.flip_4_state)
+        return None
+
     def build_state(self):
-        # print("Building state for {}".format(self.stack))
-        self.flip_1_state = PancakeState(None, -1)
-        self.flip_2_state = PancakeState(None, -1)
-        self.flip_3_state = PancakeState(None, -1)
-        self.flip_4_state = PancakeState(None, -1)
+        # print("\n\n\nBuilding state for: {}".format(self.stack))
+        # self.flip_1_state = PancakeState(None, -1)
+        # self.flip_2_state = PancakeState(None, -1)
+        # self.flip_3_state = PancakeState(None, -1)
+        # self.flip_4_state = PancakeState(None, -1)
 
         flip_1_stack = self.stack[:]
         flip_2_stack = self.stack[:]
@@ -40,11 +90,16 @@ class PancakeState:
         self.flip_3_state = PancakeState(flip_pancakes(flip_3_stack, 3), self.cost + 3)
         self.flip_4_state = PancakeState(flip_pancakes(flip_4_stack, 4), self.cost + 4)
 
+        self.flip_1_state.parent = self
+        self.flip_2_state.parent = self
+        self.flip_3_state.parent = self
+        self.flip_4_state.parent = self
+
         # print(self.flip_1_state)
         # print(self.flip_2_state)
         # print(self.flip_3_state)
         # print(self.flip_4_state)
-        # print("finished state for {}".format(self))
+        # print("finished building: {}\n\n\n\n".format(self))
 
     # def __lt__(self, other):
     #     if other is not None:
@@ -61,7 +116,7 @@ def pancake_problem(pancake_input):
 
     pancake_stack = [pancake0, pancake1, pancake2, pancake3]
 
-    print("Read in pancakes: {}".format(pancake_stack))
+    # print("Read in pancakes: {}".format(pancake_stack))
 
     search_type = pancake_input[9]
 
@@ -132,16 +187,18 @@ def astar_flip_pancakes(pancake_state):
 def bfs_flip_pancakes(pancake_state):
     print("starting bfs")
     pancake_states_to_build = [(pancake_state.cost, pancake_state)]  # fringe
-    explored_pancake_states = []
+    winning_state = None
+    searched_state_count = 0
 
     for entry in pancake_states_to_build:  # type: tuple
-        print("building out: {}".format(entry))
-        cost = entry[0]
+        searched_state_count += 1
+        # print("building out: {}".format(entry))
         state = entry[1]  # type: PancakeState
 
         state.build_state()
         if perfect_stack(state.stack):
-            print("Found a match!")
+            # print("Found a match!")
+            winning_state = state
             break
 
         pancake_states_to_build.append((state.flip_1_state.cost, state.flip_1_state))
@@ -149,7 +206,10 @@ def bfs_flip_pancakes(pancake_state):
         pancake_states_to_build.append((state.flip_3_state.cost, state.flip_3_state))
         pancake_states_to_build.append((state.flip_4_state.cost, state.flip_4_state))
 
-    return None
+    print("found solution after searching {} states".format(searched_state_count))
+    winning_state.print_winning_state_tree()
+
+    return winning_state
 
 
 def tests():
@@ -195,4 +255,4 @@ def tests():
 
 pancake_problem("1b2b3b4w-b")
 
-# tests()
+tests()
