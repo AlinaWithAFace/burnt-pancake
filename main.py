@@ -1,5 +1,7 @@
+# Alina Christenbury
+# 2020-04-10
+
 import heapq
-import heapdict
 
 
 class PancakeState:
