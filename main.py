@@ -7,7 +7,7 @@ class PancakeState:
         self.parent = None  # type: PancakeState
         self.stack = stack
         self.cost = cost
-        self.heuristic_cost = None
+        self.move_cost = None
         self.flip_1_state = None  # type: PancakeState
         self.flip_2_state = None  # type: PancakeState
         self.flip_3_state = None  # type: PancakeState
@@ -47,7 +47,7 @@ class PancakeState:
 
     def print_winning_state_tree(self):
         string = ''.join(self.stack)
-        temp = "{} cost: {}".format(string, self.cost)
+        temp = "{} | move cost: {} | heuristic cost: {}".format(string, self.move_cost, self.cost)
         print(temp)
         if self.parent is not None:
             self.parent.print_winning_state_tree()
@@ -75,10 +75,6 @@ class PancakeState:
 
     def build_state(self):
         # print("\n\n\nBuilding state for: {}".format(self.stack))
-        # self.flip_1_state = PancakeState(None, -1)
-        # self.flip_2_state = PancakeState(None, -1)
-        # self.flip_3_state = PancakeState(None, -1)
-        # self.flip_4_state = PancakeState(None, -1)
 
         flip_1_stack = self.stack[:]
         flip_2_stack = self.stack[:]
@@ -95,17 +91,16 @@ class PancakeState:
         self.flip_3_state.parent = self
         self.flip_4_state.parent = self
 
-        # print(self.flip_1_state)
-        # print(self.flip_2_state)
-        # print(self.flip_3_state)
-        # print(self.flip_4_state)
-        # print("finished building: {}\n\n\n\n".format(self))
+        self.flip_1_state.move_cost = 1
+        self.flip_2_state.move_cost = 2
+        self.flip_3_state.move_cost = 3
+        self.flip_4_state.move_cost = 4
 
-    # def __lt__(self, other):
-    #     if other is not None:
-    #         return self.cost < other.cost
-    #     else:
-    #         return self
+    def __lt__(self, other):
+        if other is not None:
+            return self.cost < other.cost
+        else:
+            return self
 
 
 def pancake_problem(pancake_input):
@@ -123,16 +118,16 @@ def pancake_problem(pancake_input):
     pancake_state = PancakeState(pancake_stack, 0)
 
     if search_type == "a":
-        print("trying a* search...")
+        # print("trying a* search...")
         astar_flip_pancakes(pancake_state)
     elif search_type == "b":
-        print("trying breadth first search...")
+        # print("trying breadth first search...")
         bfs_flip_pancakes(pancake_state)
     else:
-        print("Invalid search type, received")
+        print("Invalid search type received")
         print(search_type)
 
-    print("ended up with {}".format(pancake_state.stack))
+    # print("ended up with {}".format(pancake_state.stack))
     return pancake_state.stack
 
 
@@ -180,8 +175,37 @@ def perfect_stack(pancake_stack):
 
 
 def astar_flip_pancakes(pancake_state):
-    # TODO
-    return pancake_state
+    print("starting a*")
+    open_states = []  # fringe
+    closed_states = []
+    winning_state = None
+    searched_count = 0
+
+    heapq.heapify(open_states)
+    heapq.heappush(open_states, (pancake_state.cost, pancake_state))
+
+    while open_states:
+        entry = heapq.heappop(open_states)
+        state = entry[1]
+        state.build_state()
+        searched_count += 1
+
+        if perfect_stack(state.stack):
+            print("found a match!")
+            winning_state = state
+            break
+
+        heapq.heappush(open_states, (state.flip_1_state.cost, state.flip_1_state))
+        heapq.heappush(open_states, (state.flip_2_state.cost, state.flip_2_state))
+        heapq.heappush(open_states, (state.flip_3_state.cost, state.flip_3_state))
+        heapq.heappush(open_states, (state.flip_4_state.cost, state.flip_4_state))
+
+        closed_states.append(entry)
+
+    print("found solution after searching {} states".format(searched_count))
+    winning_state.print_winning_state_tree()
+
+    return winning_state
 
 
 def bfs_flip_pancakes(pancake_state):
@@ -253,6 +277,8 @@ def tests():
     print("finished tests!")
 
 
-pancake_problem("1b2b3b4w-b")
-
 tests()
+pancake_problem("1b2b3b4w-b")
+pancake_problem("1b2b3b4w-a")
+pancake_problem("4b2b3b1w-a")
+pancake_problem("4b2b3b1w-b")
